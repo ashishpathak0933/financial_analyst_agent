@@ -1,50 +1,77 @@
 from phi.agent import Agent
 from phi.model.groq import Groq
-from phi.tools.yfinance import YFinanceTools
 from phi.tools.duckduckgo import DuckDuckGo
-import openai
-
-import os
+from phi.tools.yfinance import YFinanceTools
 from dotenv import load_dotenv
+import os
+
+# Load environment variables
 load_dotenv()
+os.environ["PHI_API_KEY"] = os.getenv("PHI_API_KEY")
 
+# Set up model
+llm_model = Groq(id="meta-llama/llama-4-scout-17b-16e-instruct")
 
-## web search agent
-web_search_agent=Agent(
-    name="Web Search Agent",
-    role="Search the web for the information",
-    model=Groq(id="meta-llama/llama-4-scout-17b-16e-instruct"),
+# Web search agent
+web_search_agent = Agent(
+    name="Web Search",
+    role="Search the web and provide external context",
+    model=llm_model,
     tools=[DuckDuckGo()],
-    instructions=["Alway include sources"],
-    show_tools_calls=True,
-    markdown=True,
-
-)
-
-## Financial agent
-finance_agent=Agent(
-    name="Finance AI Agent",
-    model=Groq(id="meta-llama/llama-4-scout-17b-16e-instruct"),
-    tools=[
-        YFinanceTools(stock_price=True, analyst_recommendations=True, stock_fundamentals=True,
-                      company_news=True),
+    instructions=[
+        "Always include sources in your answer.",
+        "Summarize information clearly using markdown."
     ],
-    instructions=["Use tables to display the data"],
     show_tool_calls=True,
-    markdown=True,
-
+    markdown=True
 )
 
-multi_ai_agent=Agent(
-    team=[web_search_agent,finance_agent],
-    model=Groq(id="meta-llama/llama-4-scout-17b-16e-instruct"),
-    instructions=["Always include sources","Use table to display the data"],
+# Financial data agent
+finance_agent = Agent(
+    name="Finance Expert",
+    role="Analyze stock data, company news, and analyst recommendations.",
+    model=llm_model,
+    tools=[YFinanceTools(
+        stock_price=True,
+        stock_fundamentals=True,
+        company_news=True,
+        analyst_recommendations=True
+    )],
+    instructions=[
+        "Use tables to show stock data.",
+        "Summarize financial indicators and news concisely."
+    ],
     show_tool_calls=True,
-    markdown=True,
+    markdown=True
 )
 
-multi_ai_agent.print_response("Summarize analyst recommendation and share the latest news for NVDA",stream=True)
+# Master agent that coordinates sub-agents
+master_agent = Agent(
+    name="Chief Analyst AI",
+    role="Analyze the user's request, delegate subtasks to the right agents, and return a combined answer.",
+    model=llm_model,
+    team=[web_search_agent, finance_agent],
+    instructions=[
+        "Break the task into logical steps.",
+        "Use the right agent for each step.",
+        "Combine the results clearly using markdown and tables.",
+        "Include source links where available."
+    ],
+    show_tool_calls=True,
+    markdown=True
+)
 
-##model=Groq(id="meta-llama/llama-4-scout-17b-16e-instruct"),
 
-#model=OpenAIChat(id="gpt-4o") (if you have open AI key you can replace the model )
+if __name__ == "__main__":
+    while True:
+        user_input = input("\n Ask your Chief Analyst AI something (or type 'exit'): ")
+        if user_input.lower() in ["exit", "quit"]:
+            print("Exiting.")
+            break
+
+        print("\n AI is thinking...\n")
+        try:
+            response = master_agent.run(user_input, additional_information="", stream=False)
+            print(response.content)
+        except Exception as e:
+            print("Error occurred:", e)
