@@ -1,3 +1,6 @@
+# Financial Analyst Agent My learning Workflow
+![AI Workflow Diagram](./learning_workflow.png)
+
 # Financial Analyst Agent
 
 This project is a multi-agent financial assistant built using the `phi` framework and Groq's LLaMA models. It combines web search and real-time stock market data to provide summaries, analyst recommendations, and the latest news for companies like NVDA.
