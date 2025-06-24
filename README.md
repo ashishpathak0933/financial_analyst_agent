@@ -3,7 +3,7 @@
 
 # Financial Analyst Agent
 
-This project is a multi-agent financial assistant built using the `phi` framework and Groq's LLaMA models. It combines web search and real-time stock market data to provide summaries, analyst recommendations, and the latest news for companies like NVDA.
+This project is a multi-agent financial assistant built using the `phi` framework and Groq's LLaMA models. It combines web search and real-time stock market data to provide summaries, analyst recommendations, and the latest news for companies like NVDA. You can ask simple questions like how is Apple Stocks performing or any other stock name. 
 
 ## Features
 
